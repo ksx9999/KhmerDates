@@ -2,6 +2,7 @@
   "name": "ប្រតិទិនខ្មែរ - Khmer Calendar",
   "short_name": "ប្រតិទិនខ្មែរ",
   "description": "Khmer Lunar Calendar with date converter and date picker",
+  "version": "1.4.9",
   "id": "/KhmerDates/",
   "start_url": ".",
   "scope": ".",
