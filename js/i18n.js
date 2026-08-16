@@ -409,9 +409,17 @@ const I18n = (() => {
     document.documentElement.setAttribute('lang', lang);
   }
 
+  // The app's theme is chosen in-app and does not follow the system, so every
+  // theme-color meta has to be rewritten. querySelector would return only the
+  // first, and any left carrying a prefers-color-scheme media query would still
+  // win whenever the system happened to match it — which is how a dark app on a
+  // light phone ended up with a light strip behind the status bar.
   function _applyThemeColorMeta(theme) {
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = theme === 'light' ? '#f0f2f8' : '#0a0c14';
+    const colour = theme === 'light' ? '#f0f2f8' : '#0a0c14';
+    document.querySelectorAll('meta[name="theme-color"]').forEach(meta => {
+      meta.content = colour;
+      meta.removeAttribute('media');
+    });
   }
 
   function setTheme(theme) {
