@@ -63,7 +63,16 @@ body {
   display: flex;
   flex-direction: column;
   padding: 0 14px;
-  padding-bottom: 60px;
+  /* Must reserve the footer's real height, which grows with the safe area:
+     .cal-footer is fixed and sizes to max(56px, 50px + --kh-footer-safe), so a
+     flat 60px under-reserved on a gesture-navigation phone and the fixed bar
+     covered the bottom of the events card. .has-today-fab below already had
+     the safe-area term; this base rule did not. */
+  /* 56px is the footer's own height; the rest is clearance so the card's
+     rounded bottom edge sits above the bar instead of running into it — with
+     only the footer's height reserved the card met it flush and read as cut
+     off, since card and footer share a background colour. */
+  padding-bottom: calc(74px + var(--kh-footer-safe));
   position: relative;
 }
 
@@ -540,6 +549,17 @@ body {
    over the iOS safe-area override below. */
 .cal-app.has-today-fab {
   padding-bottom: calc(114px + var(--kh-footer-safe));
+}
+
+/* The floating Today pill reserves 114px, which on a short screen leaves less
+   than the grid's min-content plus the card's normal floor — the two then
+   overflow and the pill lands on top of the card. The card gives way while the
+   pill is on screen; its body scrolls, so nothing is lost, and the grid keeps
+   its floor because shrinking that would push rows over the card instead. */
+/* With the pill on screen the column is ~40px tighter, which is more than the
+   grid alone can give back, so the card's floor drops to about one row. */
+.cal-app.has-today-fab .month-events {
+  min-height: 72px;
 }
 
 /* ===== Month / Year Picker Overlay ===== */
@@ -1762,7 +1782,12 @@ body {
 
 /* ===== Responsive ===== */
 @media (max-width: 460px) {
-  .cal-app { padding: 0 10px; }
+  /* Side padding only. The shorthand here used to reset padding-bottom to 0,
+     wiping out the footer reservation on every phone under 460px wide — the
+     events card then ran the full height of the app and the fixed footer
+     covered its last rows. .has-today-fab re-set the padding at higher
+     specificity, which is why the bug only showed on the current month. */
+  .cal-app { padding-left: 10px; padding-right: 10px; }
   .cal-cell { min-height: 50px; }
   .cal-gday { font-size: 16px; }
   .cal-kday { font-size: 10px; }
@@ -3155,17 +3180,37 @@ body {
    shrunken grid cannot shrink its contents — the rows would overflow downward
    and paint over the card. Growing is safe; shrinking is not. */
 .cal-grid {
-  flex: 1 0 auto;
+  /* flex-shrink is 1 now, but deliberately WITHOUT min-height:0. That leaves
+     the automatic minimum in place, so the grid can give space back to the
+     events card only down to its own min-content — six rows at the cells' own
+     min-height. It cannot be squeezed past that, which is what used to make
+     rows overflow and paint over the card. */
+  flex: 1 1 auto;
 }
 
-/* Sizes to its content now, capped so a busy month can't crowd the grid out;
-   .month-events-body has min-height:0 so the overflow scrolls internally. */
+/* The card sizes to its content between a floor and a cap; it does not grow
+   into spare height. Growing meant a month with one event showed that event
+   above a large empty card — the complaint this layout started with. The grid
+   takes the slack instead, and the card still expands for a busy month up to
+   the cap, past which .month-events-body scrolls.
+
+   The floor belongs here and not on .month-events-body: a min-height on the
+   body does not shrink with the card, so the body spilled past the card's
+   rounded bottom and ran into the footer. The grid is the box with slack —
+   grid-auto-rows:1fr over .cal-cell{min-height:60px} puts its floor at about
+   385px, roughly 110px below the height it takes when free — so the grid gives
+   way and the card keeps its size. */
 .month-events {
   flex: 0 1 auto;
-  min-height: 104px;
-  max-height: 34vh;
+  min-height: 132px;
+  max-height: 46vh;
 }
 
+/* No floor here. .month-events-body is the scroll area, and a min-height on it
+   does not shrink with the card — the body simply spilled past the card's
+   rounded bottom and ran into the footer, which is what made the card look cut
+   off. With min-height:0 the card sizes to its content, shrinks when the month
+   needs six rows, and the body scrolls inside it. */
 .month-events-body {
   min-height: 0;
 }

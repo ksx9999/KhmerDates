@@ -1,4 +1,4 @@
-const CACHE_NAME = 'khmer-calendar-v64';
+const CACHE_NAME = 'khmer-calendar-v73';
 const ASSETS = [
   './',
   './index.html',
