@@ -237,7 +237,9 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  box-shadow: 0 4px 16px rgba(91,156,246,0.25), 0 0 0 1px rgba(255,255,255,0.06);
+  /* A hairline ring only. The old blue glow was tuned for the previous logo
+     and clashes with the red-and-cream mark. */
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.10);
   flex-shrink: 0;
 }
 .cal-topbar-text { display: flex; flex-direction: column; }
@@ -2881,8 +2883,8 @@ body {
 
 /* --- Header --- */
 [data-theme="light"] .cal-topbar-icon {
-  /* the base 1px rgba(255,255,255,0.06) ring is invisible on white */
-  box-shadow: 0 4px 14px rgba(59,125,230,0.18), 0 0 0 1px rgba(0,0,0,0.07);
+  /* the base white ring is invisible on a light background */
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.10);
 }
 
 [data-theme="light"] .cal-month-col {
@@ -3144,17 +3146,24 @@ body {
    Now the grid takes its natural height and the card absorbs
    whatever space is left, scrolling internally instead.
    ========================================================= */
-/* flex-shrink MUST stay 0: the cells have their own min-height, so a shrunken
-   grid box cannot shrink its contents — the rows just overflow downward and
-   paint over the events card. Fixed height, and the card absorbs the rest. */
+/* Which box absorbs the leftover height decides how the screen reads. Letting
+   the card absorb it meant a quiet month showed one event above a third of a
+   screen of empty card. The grid takes the slack instead, so spare space
+   becomes larger, easier-to-tap date cells.
+
+   flex-shrink stays 0 on the grid: the cells have their own min-height, so a
+   shrunken grid cannot shrink its contents — the rows would overflow downward
+   and paint over the card. Growing is safe; shrinking is not. */
 .cal-grid {
-  flex: 0 0 auto;
+  flex: 1 0 auto;
 }
 
+/* Sizes to its content now, capped so a busy month can't crowd the grid out;
+   .month-events-body has min-height:0 so the overflow scrolls internally. */
 .month-events {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 104px;
-  max-height: none;
+  max-height: 34vh;
 }
 
 .month-events-body {
