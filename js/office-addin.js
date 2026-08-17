@@ -67,6 +67,19 @@
    * has already rendered. That avoids re-deriving the date and cannot drift
    * from what the rest of the sheet shows.
    */
+  /* decorate() writes into the very element it is watching, so the observer
+     has to be silenced around those writes. Without this each write triggers
+     another decorate, which writes again — an endless loop that pins the CPU
+     and leaves the pane looking frozen and unclickable. */
+  var observer = null;
+  var observed = null;
+  /* Hard re-entrancy guard. Disconnecting the observer around the writes should
+     be enough on its own, but a mutation queued before the disconnect can still
+     deliver afterwards. This makes a second decorate impossible while one is in
+     progress, so the loop cannot come back however the timing falls. */
+  var decorating = false;
+  var OBSERVE_OPTS = { childList: true, subtree: true };
+
   var PLACE_KEY = 'kh-cal-place';
   var PLACE_DEFAULT = 'ខេត្តព្រះសីហនុ';
   var PLACE_LABEL = { km: 'ទីកន្លែង', en: 'Place', zh: '地点' };
@@ -127,6 +140,16 @@
      sheet is re-rendered on every day tap, so this runs from an observer
      rather than once at startup. */
   function decorate() {
+    if (decorating) return;
+    decorating = true;
+    try {
+      decorateInner();
+    } finally {
+      decorating = false;
+    }
+  }
+
+  function decorateInner() {
     var rows = document.querySelectorAll('#cal-detail-content .detail-full-row');
     Array.prototype.forEach.call(rows, function (row) {
       if (row.querySelector('.office-insert-btn')) return;
@@ -151,7 +174,13 @@
       row.appendChild(btn);
     });
 
-    mountPlaceRow();
+    if (observer) observer.disconnect();
+    try {
+      mountPlaceRow();
+    } finally {
+      // Reconnect even if mountPlaceRow throws, or the sheet stops updating.
+      if (observer && observed) observer.observe(observed, OBSERVE_OPTS);
+    }
   }
 
   /* The composed place+date row is not part of the app's own sheet, so it is
@@ -164,7 +193,8 @@
 
     if (!text) { if (existing) existing.remove(); return; }
     if (existing) {
-      existing.querySelector('.detail-full').textContent = text;
+      var cellEl = existing.querySelector('.detail-full');
+      if (cellEl.textContent !== text) cellEl.textContent = text;
       existing.querySelector('.office-insert-btn').dataset.text = text;
       return;
     }
@@ -231,7 +261,9 @@
 
     var target = document.getElementById('cal-detail-content');
     if (target && window.MutationObserver) {
-      new MutationObserver(decorate).observe(target, { childList: true, subtree: true });
+      observed = target;
+      observer = new MutationObserver(decorate);
+      observer.observe(target, OBSERVE_OPTS);
     }
     decorate();
   });
