@@ -616,10 +616,13 @@
     // Everything below is inert in a normal browser and in the mobile apps.
     const KH_OFFICE = /[?&]office=1(&|$)/.test(location.search);
 
-    // No service worker inside the add-in. Office hosts the page in an
-    // embedded webview whose storage the user cannot clear, so a cache-first
-    // worker there would pin an old build with no way out.
-    if ('serviceWorker' in navigator && !KH_OFFICE) {
+    // The worker runs in the add-in too, so the pane keeps working without a
+    // network. It was disabled here at first over a fear of pinning a stale
+    // build in storage the user cannot clear — but sw.js is network-first for
+    // the page itself and versions its cache, so an update always lands on the
+    // next launch. Cutting offline support to avoid a risk that strategy
+    // already handles was the wrong trade.
+    if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
     }
 
