@@ -3437,3 +3437,49 @@ body {
   border-color: #2563EB;
   color: #1D4ED8;
 }
+
+/* =========================================================
+   OFFICE ADD-IN — only active when the page is loaded from
+   the add-in manifest (?office=1). A task pane is roughly
+   phone-shaped, so the layout needs no changes; this is the
+   insert affordance and its confirmation.
+   ========================================================= */
+.office-insert-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 4px;
+  border: 1px solid var(--kh-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--kh-primary);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.office-insert-btn:hover,
+.office-insert-btn:active { background: var(--kh-primary-glow); }
+
+/* The add-in cannot use the app's toast, which is private to its module. */
+#office-flash {
+  position: fixed;
+  left: 50%;
+  bottom: 84px;
+  transform: translate(-50%, 12px);
+  z-index: 400;
+  max-width: 88%;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: var(--kh-card-bg);
+  border: 1px solid var(--kh-border);
+  color: var(--kh-text);
+  font-size: 12px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s, transform .18s;
+}
+#office-flash.show { opacity: 1; transform: translate(-50%, 0); }
+#office-flash.bad { border-color: var(--kh-red); color: var(--kh-red); }
