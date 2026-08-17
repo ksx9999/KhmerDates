@@ -3516,3 +3516,20 @@ body {
 /* The task pane is always pointer-driven, so never leave it without arrows
    even if the host reports coarse pointer capabilities. */
 .office-addin .cal-month-nav { display: inline-flex; }
+
+/* Free-text setting (the place prefix), styled like the toggle groups. */
+.settings-text-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--kh-border);
+  border-radius: 10px;
+  background: var(--kh-card-bg);
+  color: var(--kh-text);
+  font: inherit;
+  font-size: 13px;
+}
+.settings-text-input:focus {
+  outline: none;
+  border-color: var(--kh-primary);
+}
+.detail-place { font-weight: 600; }

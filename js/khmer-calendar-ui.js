@@ -781,6 +781,31 @@ const KhCal = (() => {
   }
 
   // === Day detail panel ===
+  /* ===== Place prefix =====
+   * Khmer letters open with the place before the date:
+   *   ខេត្តព្រះសីហនុ, ថ្ងៃទី១៧ ខែសីហា ឆ្នាំ២០២៦
+   * gDatesPro() in khmer-calendar.js builds exactly this but hard-codes the
+   * province in ADH[3], so the place is a saved setting instead and the row is
+   * composed here from the Gregorian string the sheet already has.
+   *
+   * Deliberately rendered as part of _showDetail's own markup. A previous
+   * attempt appended this row from the Office add-in into the element its
+   * MutationObserver was watching, which fed itself endlessly and froze the
+   * task pane. As part of the normal render there is no observer involved.
+   */
+  const PLACE_KEY = 'kh-cal-place';
+  const PLACE_DEFAULT = 'ខេត្តព្រះសីហនុ';
+
+  function _getPlace() {
+    try {
+      const v = localStorage.getItem(PLACE_KEY);
+      return v === null ? PLACE_DEFAULT : v;
+    } catch (e) { return PLACE_DEFAULT; }
+  }
+  function _setPlace(v) {
+    try { localStorage.setItem(PLACE_KEY, v); } catch (e) {}
+  }
+
   function _showDetail(y, m, d) {
     _selectedDate = { y, m, d };
     _renderCalendar();
@@ -840,6 +865,7 @@ const KhCal = (() => {
       ${_copyRow(khDate)}
       ${cnLine ? _copyRow(cnLine, 'detail-chinese') : ''}
       ${_copyRow(grDate, 'detail-greg')}
+      ${(() => { const p = _getPlace().trim(); return p ? _copyRow(p + ', ' + grDate, 'detail-place') : ''; })()}
       ${_renderDailyBlock(dt, lang)}
     `;
 
@@ -1163,6 +1189,16 @@ const KhCal = (() => {
     }
     // Start day toggle
     const startGroup = document.getElementById('startday-toggle');
+    const placeInput = document.getElementById('place-input');
+    if (placeInput) {
+      placeInput.value = _getPlace();
+      placeInput.addEventListener('input', () => {
+        _setPlace(placeInput.value);
+        // Refresh the open sheet so the row tracks the field as it is typed.
+        if (_selectedDate) _showDetail(_selectedDate.y, _selectedDate.m, _selectedDate.d);
+      });
+    }
+
     if (startGroup) {
       _setActiveToggle(startGroup, '[data-start="' + I18n.getStartDay() + '"]');
       startGroup.addEventListener('click', (e) => {
