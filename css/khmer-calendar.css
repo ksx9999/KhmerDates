@@ -3516,3 +3516,40 @@ body {
 /* The task pane is always pointer-driven, so never leave it without arrows
    even if the host reports coarse pointer capabilities. */
 .office-addin .cal-month-nav { display: inline-flex; }
+
+/* Place field, shown only inside the Office task pane. Khmer letters open with
+   the place before the date, and it is nearly always the same one, so it is a
+   remembered setting rather than something to retype. */
+#office-place-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin: 6px 0 2px;
+  padding: 7px 10px;
+  border: 1px solid var(--kh-border);
+  border-radius: 10px;
+  background: var(--kh-card-bg);
+}
+#office-place-bar label {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--kh-text-secondary);
+}
+#office-place-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--kh-border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--kh-text);
+  font: inherit;
+  font-size: 12px;
+}
+#office-place-input:focus {
+  outline: none;
+  border-color: var(--kh-primary);
+}
+#office-place-row .detail-full { font-weight: 600; }
