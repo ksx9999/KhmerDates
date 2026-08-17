@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Khmer Calendar commands</title>
+  <!--
+    Function file for the ribbon dropdown. Office loads this page invisibly and
+    calls the functions registered below when a menu item with an
+    ExecuteFunction action is clicked. It renders nothing.
+  -->
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script src="js/khmer-calendar.js"></script>
+</head>
+<body>
+<script>
+  Office.onReady(function () {
+    /* Writes today's full Khmer reading at the cursor without opening the pane. */
+    Office.actions.associate('insertToday', function (event) {
+      var text;
+      try {
+        text = KhmerCalendar.khmerDates(new Date());
+      } catch (e) {
+        event.completed();
+        return;
+      }
+      Office.context.document.setSelectedDataAsync(
+        text,
+        { coercionType: Office.CoercionType.Text },
+        function () { event.completed(); }
+      );
+    });
+  });
+</script>
+</body>
+</html>
