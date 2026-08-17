@@ -54,102 +54,10 @@
     );
   }
 
-
-  /* ===== Place prefix =====
-   *
-   * Khmer letters open with the place before the date:
-   *   ខេត្តព្រះសីហនុ, ថ្ងៃទី១៧ ខែសីហា ឆ្នាំ២០២៦
-   *
-   * khmer-calendar.js already builds exactly this in gDatesPro(), ported from
-   * the VBA, but with the province hard-coded in ADH[3] — no good for anyone
-   * outside Preah Sihanouk. So the place is a field here instead, saved per
-   * machine, and the row is assembled from the Gregorian row the detail sheet
-   * has already rendered. That avoids re-deriving the date and cannot drift
-   * from what the rest of the sheet shows.
-   */
-  /* decorate() writes into the very element it is watching, so the observer
-     has to be silenced around those writes. Without this each write triggers
-     another decorate, which writes again — an endless loop that pins the CPU
-     and leaves the pane looking frozen and unclickable. */
-  var observer = null;
-  var observed = null;
-  /* Hard re-entrancy guard. Disconnecting the observer around the writes should
-     be enough on its own, but a mutation queued before the disconnect can still
-     deliver afterwards. This makes a second decorate impossible while one is in
-     progress, so the loop cannot come back however the timing falls. */
-  var decorating = false;
-  var OBSERVE_OPTS = { childList: true, subtree: true };
-
-  var PLACE_KEY = 'kh-cal-place';
-  var PLACE_DEFAULT = 'ខេត្តព្រះសីហនុ';
-  var PLACE_LABEL = { km: 'ទីកន្លែង', en: 'Place', zh: '地点' };
-
-  function getPlace() {
-    try {
-      var v = localStorage.getItem(PLACE_KEY);
-      return v === null ? PLACE_DEFAULT : v;
-    } catch (e) { return PLACE_DEFAULT; }
-  }
-  function setPlace(v) {
-    try { localStorage.setItem(PLACE_KEY, v); } catch (e) {}
-  }
-
-  /* A single field at the top of the pane. Saved on every keystroke: there is
-     no Save button to forget, and the value is one short string. */
-  function mountPlaceBar() {
-    if (document.getElementById('office-place-bar')) return;
-    var app = document.querySelector('.cal-app');
-    if (!app) return;
-
-    var bar = document.createElement('div');
-    bar.id = 'office-place-bar';
-
-    var label = document.createElement('label');
-    label.setAttribute('for', 'office-place-input');
-    label.textContent = PLACE_LABEL[lang()] || PLACE_LABEL.en;
-
-    var input = document.createElement('input');
-    input.type = 'text';
-    input.id = 'office-place-input';
-    input.value = getPlace();
-    input.placeholder = PLACE_DEFAULT;
-    input.setAttribute('autocomplete', 'off');
-    input.addEventListener('input', function () {
-      setPlace(input.value);
-      decorate();           // keep the composed row in step with the field
-    });
-
-    bar.appendChild(label);
-    bar.appendChild(input);
-    app.insertBefore(bar, app.firstChild);
-  }
-
-  /* Builds "<place>, <Gregorian>" from the row the sheet already rendered. */
-  function placeRowText() {
-    var greg = document.querySelector('#cal-detail-content .detail-greg');
-    if (!greg) return null;
-    var row = greg.closest('.detail-full-row');
-    var btn = row && row.querySelector('[data-copy]');
-    var date = btn ? btn.getAttribute('data-copy') : greg.textContent.trim();
-    if (!date) return null;
-    var place = getPlace().trim();
-    return place ? place + ', ' + date : date;
-  }
-
   /* Add an insert button to any detail row that does not have one yet. The
      sheet is re-rendered on every day tap, so this runs from an observer
      rather than once at startup. */
   function decorate() {
-    if (decorating) return;
-    decorating = true;
-    try {
-      decorateInner();
-    } finally {
-      decorating = false;
-    }
-  }
-
-  function decorateInner() {
     var rows = document.querySelectorAll('#cal-detail-content .detail-full-row');
     Array.prototype.forEach.call(rows, function (row) {
       if (row.querySelector('.office-insert-btn')) return;
@@ -173,59 +81,6 @@
       });
       row.appendChild(btn);
     });
-
-    if (observer) observer.disconnect();
-    try {
-      mountPlaceRow();
-    } finally {
-      // Reconnect even if mountPlaceRow throws, or the sheet stops updating.
-      if (observer && observed) observer.observe(observed, OBSERVE_OPTS);
-    }
-  }
-
-  /* The composed place+date row is not part of the app's own sheet, so it is
-     added here and kept up to date as the field is typed in. */
-  function mountPlaceRow() {
-    var content = document.getElementById('cal-detail-content');
-    if (!content) return;
-    var text = placeRowText();
-    var existing = document.getElementById('office-place-row');
-
-    if (!text) { if (existing) existing.remove(); return; }
-    if (existing) {
-      var cellEl = existing.querySelector('.detail-full');
-      if (cellEl.textContent !== text) cellEl.textContent = text;
-      existing.querySelector('.office-insert-btn').dataset.text = text;
-      return;
-    }
-
-    var row = document.createElement('div');
-    row.className = 'detail-full-row';
-    row.id = 'office-place-row';
-
-    var cell = document.createElement('div');
-    cell.className = 'detail-full detail-selectable';
-    cell.textContent = text;
-
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'office-insert-btn';
-    btn.title = say(LABEL);
-    btn.setAttribute('aria-label', say(LABEL));
-    btn.dataset.text = text;
-    btn.innerHTML =
-      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
-      ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      insert(btn.dataset.text);
-    });
-
-    row.appendChild(cell);
-    row.appendChild(btn);
-    content.appendChild(row);
   }
 
   if (!window.Office || !Office.onReady) return;
@@ -257,13 +112,10 @@
     var host = (info && info.host ? String(info.host) : 'office').toLowerCase();
     document.body.classList.add('office-addin', 'office-host-' + host);
     autoOpenWithDocument();
-    mountPlaceBar();
 
     var target = document.getElementById('cal-detail-content');
     if (target && window.MutationObserver) {
-      observed = target;
-      observer = new MutationObserver(decorate);
-      observer.observe(target, OBSERVE_OPTS);
+      new MutationObserver(decorate).observe(target, { childList: true, subtree: true });
     }
     decorate();
   });
