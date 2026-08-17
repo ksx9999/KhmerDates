@@ -577,7 +577,13 @@
                  !!Array.prototype.indexOf;
       } catch (e) { modern = false; }
 
-      if (modern) return;
+      if (modern) {
+        // Recorded either way: if the pane ever comes up blank on a modern
+        // engine, the cause is a script error rather than the browser, and
+        // knowing which is which saves a round of guessing.
+        window.__khEngine = navigator.userAgent;
+        return;
+      }
 
       window.__khUnsupported = true;
       var show = function () {
@@ -592,6 +598,8 @@
           '<p style="font-size:13px">Install it once, free from Microsoft, then reopen Office:</p>' +
           '<p style="font-size:13px;word-break:break-all">' +
           '<b>https://go.microsoft.com/fwlink/p/?LinkId=2124703</b></p>' +
+          '<p style="font-size:11px;color:#64748B;word-break:break-all">' +
+          'Engine: ' + (navigator.userAgent || 'unknown') + '</p>' +
           '<p style="font-size:12px;color:#64748B">' +
           '\u1780\u17BB\u17C6\u1791\u17B6\u17C6\u1798\u17B6\u1793 WebView2 ' +
           '\u1793\u17C5\u179B\u17BE\u1780\u17BB\u17C6\u1796\u17BB\u17D2\u1791\u17C1\u179A\u1793\u17C1\u17C7' +
