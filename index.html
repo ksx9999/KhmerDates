@@ -555,6 +555,55 @@
     );
   </script>
   <script>
+    /* Engine check — deliberately ES5 only, and first on the page.
+     *
+     * Office picks the browser it hosts a task pane in. On Windows without the
+     * WebView2 runtime it falls back to IE11, which cannot parse the arrow
+     * functions, const and template literals the calendar is written in. Every
+     * script then dies on a syntax error and the pane renders as an empty box:
+     * the CSS and the logo arrive, nothing else does.
+     *
+     * This block must therefore avoid all of those features itself, or it would
+     * fail in exactly the case it exists to report.
+     */
+    (function () {
+      var modern = false;
+      try {
+        // eval keeps the syntax out of this file's own parse step, so IE11
+        // reaches this line rather than choking on it.
+        eval('var f = function(){ return (x)=>x; };');
+        modern = (typeof Promise !== 'undefined') &&
+                 (typeof Map !== 'undefined') &&
+                 !!Array.prototype.indexOf;
+      } catch (e) { modern = false; }
+
+      if (modern) return;
+
+      window.__khUnsupported = true;
+      var show = function () {
+        document.body.innerHTML =
+          '<div style="font-family:Segoe UI,Tahoma,sans-serif;padding:20px;' +
+          'line-height:1.6;color:#1E293B;background:#fff;height:100%">' +
+          '<div style="font-size:15px;font-weight:700;margin-bottom:10px">' +
+          '\u1780\u17BB\u17C6\u1796\u17B code\u17C0\u179A</div>' +
+          '<p style="font-size:13px">This add-in needs the <b>Microsoft Edge WebView2 Runtime</b>, ' +
+          'which is not installed on this PC. Office is using Internet Explorer for ' +
+          'the pane instead, and the calendar cannot run there.</p>' +
+          '<p style="font-size:13px">Install it once, free from Microsoft, then reopen Office:</p>' +
+          '<p style="font-size:13px;word-break:break-all">' +
+          '<b>https://go.microsoft.com/fwlink/p/?LinkId=2124703</b></p>' +
+          '<p style="font-size:12px;color:#64748B">' +
+          '\u1780\u17BB\u17C6\u1791\u17B6\u17C6\u1798\u17B6\u1793 WebView2 ' +
+          '\u1793\u17C5\u179B\u17BE\u1780\u17BB\u17C6\u1796\u17BB\u17D2\u1791\u17C1\u179A\u1793\u17C1\u17C7' +
+          '</p></div>';
+      };
+      if (document.body) { show(); }
+      else if (window.addEventListener) { window.addEventListener('load', show); }
+      else { window.attachEvent('onload', show); }
+    })();
+  </script>
+
+  <script>
     // Office Add-in mode: the manifest points at this page with ?office=1.
     // Everything below is inert in a normal browser and in the mobile apps.
     const KH_OFFICE = /[?&]office=1(&|$)/.test(location.search);
