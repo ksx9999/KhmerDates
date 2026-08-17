@@ -85,9 +85,33 @@
 
   if (!window.Office || !Office.onReady) return;
 
+  /*
+   * Ask Office to reopen this pane by itself the next time the document is
+   * opened, so the calendar is simply there rather than something to go and
+   * find on the ribbon every time.
+   *
+   * This is per document, not per app: Office stores the flag inside the file,
+   * and there is no equivalent that fires on application start for Word, Excel
+   * or PowerPoint. So it takes effect from the next open of any document where
+   * the calendar has been used and saved. It also only works because the
+   * manifest's TaskpaneId is exactly Office.AutoShowTaskpaneWithDocument.
+   */
+  function autoOpenWithDocument() {
+    try {
+      var settings = Office.context && Office.context.document && Office.context.document.settings;
+      if (!settings) return;
+      if (settings.get('Office.AutoShowTaskpaneWithDocument') === true) return;
+      settings.set('Office.AutoShowTaskpaneWithDocument', true);
+      // Saving can fail harmlessly — a read-only or unsaved document, say — so
+      // the callback deliberately does nothing rather than alarming the user.
+      settings.saveAsync(function () {});
+    } catch (e) { /* never let this stop the calendar rendering */ }
+  }
+
   Office.onReady(function (info) {
     var host = (info && info.host ? String(info.host) : 'office').toLowerCase();
     document.body.classList.add('office-addin', 'office-host-' + host);
+    autoOpenWithDocument();
 
     var target = document.getElementById('cal-detail-content');
     if (target && window.MutationObserver) {
