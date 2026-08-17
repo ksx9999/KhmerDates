@@ -40,7 +40,16 @@
       <div class="cal-topbar-glow"></div>
       <div class="cal-topbar-row">
         <img class="cal-topbar-icon" src="icons/icon-192.png" alt="" width="34" height="34">
+        <!-- Month arrows for pointer devices. Changing month was swipe-only,
+             which leaves a laptop or the Office task pane with no way to do it.
+             Hidden on touch screens, where the swipe already works. -->
+        <button type="button" class="cal-month-nav" id="cal-prev-month" aria-label="Previous month" title="Previous month">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
         <button type="button" class="cal-month-title" id="cal-month-title" aria-label="Choose month and year"></button>
+        <button type="button" class="cal-month-nav" id="cal-next-month" aria-label="Next month" title="Next month">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
       </div>
     </header>
 
@@ -585,6 +594,23 @@
         localStorage.setItem(_bannerDismissedKey, '1');
         document.getElementById('install-banner').classList.add('is-hidden');
       }
+    });
+
+    // Month arrows (pointer devices) and keyboard navigation. Both go through
+    // the same KhCal._nav the swipe uses, so behaviour cannot drift.
+    document.getElementById('cal-prev-month').addEventListener('click', () => KhCal._nav(-1));
+    document.getElementById('cal-next-month').addEventListener('click', () => KhCal._nav(1));
+
+    document.addEventListener('keydown', (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // Never steal keys from a field, and not while a dialog is up.
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+      if (document.querySelector('.cal-modal-overlay.open, .cal-picker-overlay.open, .cal-settings-overlay.open')) return;
+
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); KhCal._nav(-1); }
+      else if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); KhCal._nav(1); }
+      else if (e.key === 'Home' || e.key === 't' || e.key === 'T') { e.preventDefault(); KhCal._goToday(); }
     });
 
     // Esc closes any open overlay

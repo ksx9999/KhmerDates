@@ -3483,3 +3483,36 @@ body {
 }
 #office-flash.show { opacity: 1; transform: translate(-50%, 0); }
 #office-flash.bad { border-color: var(--kh-red); color: var(--kh-red); }
+
+/* Month arrows. Hidden by default so the phone layout is unchanged — the swipe
+   already covers touch. Shown only where there is a real pointer, which is
+   exactly the case the swipe cannot serve: a laptop, a desktop browser, and
+   the Office task pane. */
+.cal-month-nav {
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--kh-border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--kh-text-secondary);
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.cal-month-nav:hover {
+  color: var(--kh-primary);
+  border-color: var(--kh-primary);
+  background: var(--kh-primary-glow);
+}
+.cal-month-nav:active { transform: scale(0.94); }
+
+@media (hover: hover) and (pointer: fine) {
+  .cal-month-nav { display: inline-flex; }
+}
+/* The task pane is always pointer-driven, so never leave it without arrows
+   even if the host reports coarse pointer capabilities. */
+.office-addin .cal-month-nav { display: inline-flex; }
